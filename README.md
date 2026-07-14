@@ -1,4 +1,4 @@
-# NotebookLM-inspired Document Intelligence Assistant\n\nThis repository contains a starter scaffold for a document intelligence application (frontend + backend).\n\n## Structure\n- `backend/` - FastAPI backend with OCR, PDF parsing, FAISS vector store scaffold\n- `frontend/` - Next.js (App Router) TypeScript frontend scaffold\n\n## Quickstart\nBackend:\n```bash
+# document summary assistant
 cd backend
 python -m venv .venv
 . .venv/Scripts/activate
