@@ -1,6 +1,6 @@
 'use client'
 import React, {useState} from 'react'
-import { } from '../../lib/api'
+import { getFlashcards } from '../../lib/api'
 
 export default function FlashcardsPanel(){
   const [cards, setCards] = useState<any[]>([])
@@ -9,8 +9,7 @@ export default function FlashcardsPanel(){
   async function load(){
     setLoading(true)
     try{
-      const res = await fetch((process.env.NEXT_PUBLIC_API_URL||'http://localhost:8000') + '/flashcards')
-      const json = await res.json()
+      const json = await getFlashcards()
       setCards(json)
     }catch(e){
       setCards([])
@@ -18,16 +17,16 @@ export default function FlashcardsPanel(){
   }
 
   return (
-    <div>
-      <div className="flex gap-2 mb-2">
-        <button onClick={load} className="px-3 py-1 bg-blue-600 text-white rounded">Generate Flashcards</button>
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <button onClick={load} className="button-primary rounded-full px-3 py-1.5">Generate Flashcards</button>
       </div>
       <div className="space-y-2">
-        {loading && <div>Generating...</div>}
+        {loading && <div className="text-sm text-slate-500">Generating...</div>}
         {cards.map((c,i)=> (
-          <div key={i} className="p-3 bg-white dark:bg-slate-800 rounded">
-            <div className="font-semibold">{c.question}</div>
-            <div className="text-slate-500 mt-1">{c.answer}</div>
+          <div key={i} className="rounded-2xl border border-slate-200/70 bg-white/80 p-3 shadow-sm dark:border-slate-800/70 dark:bg-slate-800/80">
+            <div className="font-semibold text-slate-900 dark:text-slate-100">{c.question}</div>
+            <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{c.answer}</div>
           </div>
         ))}
       </div>

@@ -1,13 +1,13 @@
 import faiss
 import numpy as np
-import os
 import json
 from typing import List, Tuple
 from pathlib import Path
 
+from ..config import FAISS_INDEX_DIR
 from ..services.embeddings import embed_texts
 
-INDEX_PATH = Path(os.getenv('FAISS_INDEX_DIR', './backend/faiss_index'))
+INDEX_PATH = Path(FAISS_INDEX_DIR)
 INDEX_PATH.mkdir(parents=True, exist_ok=True)
 INDEX_FILE = INDEX_PATH / 'index.faiss'
 METADATA_FILE = INDEX_PATH / 'metadata.json'

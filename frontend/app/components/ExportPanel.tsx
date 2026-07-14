@@ -1,5 +1,6 @@
 'use client'
 import React, {useState} from 'react'
+import { postExport } from '../../lib/api'
 
 export default function ExportPanel(){
   const [format, setFormat] = useState<'md'|'txt'>('md')
@@ -9,27 +10,22 @@ export default function ExportPanel(){
   async function run(){
     setLoading(true)
     try{
-      const res = await fetch((process.env.NEXT_PUBLIC_API_URL||'http://localhost:8000') + '/export', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ format })
-      })
-      const json = await res.json()
+      const json = await postExport(format)
       setOut(json.content)
     }catch(e){ setOut('Error') }finally{ setLoading(false) }
   }
 
   return (
-    <div>
-      <div className="flex gap-2 mb-2">
-        <select value={format} onChange={e=>setFormat(e.target.value as any)} className="px-2 py-1 border rounded">
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <select value={format} onChange={e=>setFormat(e.target.value as any)} className="input-base rounded-full px-3 py-1.5 text-sm">
           <option value="md">Markdown</option>
           <option value="txt">Text</option>
         </select>
-        <button onClick={run} className="px-3 py-1 bg-blue-600 text-white rounded">Export</button>
+        <button onClick={run} className="button-primary rounded-full px-3 py-1.5">Export</button>
       </div>
-      {loading && <div>Exporting...</div>}
-      {out && <pre className="p-3 bg-white dark:bg-slate-800 rounded max-h-64 overflow-auto">{out}</pre>}
+      {loading && <div className="text-sm text-slate-500">Exporting...</div>}
+      {out && <pre className="max-h-64 overflow-auto rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3 text-sm text-slate-600 shadow-inner dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-slate-300">{out}</pre>}
     </div>
   )
 }

@@ -2,18 +2,18 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import shutil
-from services.pdf_parser import extract_text_from_pdf
-from ocr.ocr import ocr_image
-from rag.vector_store import index_documents, search
-from utils.chunk import chunk_text
-from models.schemas import ChatRequest, ChatResponse, SummaryRequest, SummaryResponse
-from rag.qa import retrieve_context, answer_from_context
+from backend.services.pdf_parser import extract_text_from_pdf
+from backend.ocr.ocr import ocr_image
+from backend.rag.vector_store import index_documents, search
+from backend.utils.chunk import chunk_text
+from backend.models.schemas import ChatRequest, ChatResponse, SummaryRequest, SummaryResponse
+from backend.rag.qa import retrieve_context, answer_from_context
 from fastapi import Body
 from fastapi.responses import JSONResponse
-from services.flashcards import generate_flashcards
-from services.quiz import generate_quiz
-from services.timeline import extract_timeline
-from services.insights import extract_insights
+from backend.services.flashcards import generate_flashcards
+from backend.services.quiz import generate_quiz
+from backend.services.timeline import extract_timeline
+from backend.services.insights import extract_insights
 from typing import Optional
 
 app = FastAPI(title="Document Intelligence API")
@@ -70,10 +70,8 @@ async def chat(body: ChatRequest):
 
 @app.post('/summary', response_model=SummaryResponse)
 async def summary(req: SummaryRequest = Body(...)):
-    # For now, create a summary by retrieving top chunks for a generic prompt
     length = req.length
     top_k = req.top_k
-    # Use a simple default prompt for summarization retrieval
     prompt = "summarize the document"
     contexts = retrieve_context(prompt, k=top_k)
     metas = [c[0] for c in contexts]
@@ -84,18 +82,40 @@ async def summary(req: SummaryRequest = Body(...)):
 
 @app.get('/metadata')
 async def metadata(doc_id: Optional[str] = None):
-    # Return stored metadata entries; optional filtering by doc_id
-    from rag.vector_store import _load_metadata
+    from backend.rag.vector_store import _load_metadata
     meta = _load_metadata()
     if doc_id:
         meta = [m for m in meta if m.get('doc_id') == doc_id]
     return JSONResponse(content=meta)
 
 
+@app.get('/documents')
+async def documents():
+    from backend.rag.vector_store import _load_metadata
+    meta = _load_metadata()
+    docs = {}
+    for item in meta:
+        doc_id = item.get('doc_id')
+        if not doc_id:
+            continue
+        docs.setdefault(doc_id, {'doc_id': doc_id, 'chunk_count': 0, 'pages': set()})
+        docs[doc_id]['chunk_count'] += 1
+        page = item.get('page')
+        if page is not None:
+            docs[doc_id]['pages'].add(page)
+
+    return JSONResponse(content=[{'doc_id': d['doc_id'], 'chunk_count': d['chunk_count'], 'pages': sorted(list(d['pages']))} for d in docs.values()])
+
+
+@app.get('/health')
+async def health():
+    return JSONResponse(content={'status': 'ok'})
+
+
 @app.get('/flashcards')
 async def flashcards(doc_id: Optional[str] = None, top_k: int = 20):
     # Generate flashcards from top chunks
-    from rag.vector_store import _load_metadata
+    from backend.rag.vector_store import _load_metadata
     meta = _load_metadata()
     if doc_id:
         meta = [m for m in meta if m.get('doc_id') == doc_id]
@@ -106,7 +126,7 @@ async def flashcards(doc_id: Optional[str] = None, top_k: int = 20):
 
 @app.get('/quiz')
 async def quiz(doc_id: Optional[str] = None, count: int = 5):
-    from rag.vector_store import _load_metadata
+    from backend.rag.vector_store import _load_metadata
     meta = _load_metadata()
     if doc_id:
         meta = [m for m in meta if m.get('doc_id') == doc_id]
@@ -117,7 +137,7 @@ async def quiz(doc_id: Optional[str] = None, count: int = 5):
 
 @app.get('/timeline')
 async def timeline(doc_id: Optional[str] = None):
-    from rag.vector_store import _load_metadata
+    from backend.rag.vector_store import _load_metadata
     meta = _load_metadata()
     if doc_id:
         meta = [m for m in meta if m.get('doc_id') == doc_id]
@@ -128,7 +148,7 @@ async def timeline(doc_id: Optional[str] = None):
 
 @app.get('/insights')
 async def insights(doc_id: Optional[str] = None):
-    from rag.vector_store import _load_metadata
+    from backend.rag.vector_store import _load_metadata
     meta = _load_metadata()
     if doc_id:
         meta = [m for m in meta if m.get('doc_id') == doc_id]
@@ -140,7 +160,7 @@ async def insights(doc_id: Optional[str] = None):
 @app.post('/export')
 async def export(format: str = Body('md')):
     # Export last indexed document summary as markdown or txt
-    from rag.vector_store import _load_metadata
+    from backend.rag.vector_store import _load_metadata
     meta = _load_metadata()
     texts = [m.get('text','') for m in meta]
     content = "\n\n".join(texts[:50])

@@ -1,71 +1,53 @@
+'use client'
+
+import Link from 'next/link'
 import React from 'react'
-import Upload from './components/Upload'
-import ChatPanel from './components/ChatPanel'
-import SummaryPanel from './components/SummaryPanel'
-import InsightsPanel from './components/InsightsPanel'
-import FlashcardsPanel from './components/FlashcardsPanel'
-import QuizPanel from './components/QuizPanel'
-import TimelinePanel from './components/TimelinePanel'
-import ExportPanel from './components/ExportPanel'
+import { ArrowRight } from 'lucide-react'
 
-export default function Page(){
+const sections = [
+  { href: '/upload', title: 'Upload', description: 'Load a PDF or image and begin analysis.' },
+  { href: '/chat', title: 'Chat', description: 'Ask grounded questions about the document.' },
+  { href: '/summary', title: 'Summary', description: 'Generate concise or detailed recaps.' },
+  { href: '/flashcards', title: 'Flashcards', description: 'Turn ideas into study-ready prompts.' },
+  { href: '/insights', title: 'Insights', description: 'Inspect word counts and reading signals.' },
+  { href: '/quiz', title: 'Quiz', description: 'Test understanding with generated questions.' },
+  { href: '/timeline', title: 'Timeline', description: 'Surface milestones and major events.' },
+  { href: '/export', title: 'Export', description: 'Share generated output in Markdown or text.' },
+]
+
+export default function Page() {
   return (
-    <main className="min-h-screen">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-4">
-          <section className="bg-white dark:bg-slate-800 p-4 rounded">
-            <h2 className="text-lg font-semibold mb-2">Upload</h2>
-            <Upload />
-          </section>
-
-          <section className="bg-white dark:bg-slate-800 p-4 rounded">
-            <h2 className="text-lg font-semibold mb-2">Chat</h2>
-            <ChatPanel />
-          </section>
-        </div>
-
-        <aside className="space-y-4">
-          <section className="bg-white dark:bg-slate-800 p-4 rounded">
-            <h2 className="text-lg font-semibold mb-2">Summary</h2>
-            <SummaryPanel />
-          </section>
-
-          <section className="bg-white dark:bg-slate-800 p-4 rounded">
-            <h2 className="text-lg font-semibold mb-2">Insights</h2>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-slate-500">Quick actions</p>
-                <div className="flex gap-2 mt-2">
-                  <button className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded" onClick={()=>{ const el = document.getElementById('insights'); if(el) el.scrollIntoView({behavior:'smooth'}) }}>Open Insights</button>
-                  <button className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded" onClick={()=>{ const el = document.getElementById('flashcards'); if(el) el.scrollIntoView({behavior:'smooth'}) }}>Flashcards</button>
-                </div>
-              </div>
-              <div id="insights"><InsightsPanel /></div>
+    <main className="min-h-screen space-y-6 py-6">
+      <section className="glass-card overflow-hidden p-6 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-4">
+            <div className="inline-flex items-center rounded-full border border-[#d4d4d4] bg-[#fafafa] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35em] text-[#404040]">
+              Document intelligence workspace
             </div>
-          </section>
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-[#171717] sm:text-4xl">A refined workspace for document intelligence.</h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-[#404040]">Open each section in its own focused view to keep the workflow clean, precise, and easy to navigate.</p>
+            </div>
+          </div>
+          <div className="rounded-[20px] border border-[#e5e5e5] bg-[#fafafa] p-5 text-sm text-[#404040] shadow-sm">
+            <div className="font-medium text-[#171717]">Recommended action</div>
+            <div className="mt-1">Upload a document to begin reviewing content and generating insights.</div>
+          </div>
+        </div>
+      </section>
 
-          <section className="bg-white dark:bg-slate-800 p-4 rounded" id="flashcards">
-            <h2 className="text-lg font-semibold mb-2">Flashcards</h2>
-            {/* @ts-ignore */}
-            <div><FlashcardsPanel /></div>
-          </section>
-
-          <section className="bg-white dark:bg-slate-800 p-4 rounded" id="quiz">
-            <h2 className="text-lg font-semibold mb-2">Quiz</h2>
-            <QuizPanel />
-          </section>
-
-          <section className="bg-white dark:bg-slate-800 p-4 rounded" id="timeline">
-            <h2 className="text-lg font-semibold mb-2">Timeline</h2>
-            <TimelinePanel />
-          </section>
-
-          <section className="bg-white dark:bg-slate-800 p-4 rounded" id="export">
-            <h2 className="text-lg font-semibold mb-2">Export</h2>
-            <ExportPanel />
-          </section>
-        </aside>
-      </div>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {sections.map((section) => (
+          <Link key={section.href} href={section.href} className="group card-surface p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[#c4c4c4] hover:shadow-[0_14px_40px_-24px_rgba(23,23,23,0.12)]">
+            <h2 className="text-lg font-semibold text-[#171717] transition group-hover:text-[#404040]">{section.title}</h2>
+            <p className="mt-3 text-sm leading-6 text-[#404040]">{section.description}</p>
+            <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#404040]">
+              <span>Open section</span>
+              <ArrowRight size={16} />
+            </div>
+          </Link>
+        ))}
+      </section>
     </main>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 import React, {useEffect, useState} from 'react'
+import { Moon, SunMedium } from 'lucide-react'
 
 export default function DarkModeToggle(){
   const [dark, setDark] = useState(false)
@@ -15,10 +16,13 @@ export default function DarkModeToggle(){
     const v = !dark
     setDark(v)
     document.documentElement.classList.toggle('dark', v)
-    localStorage.setItem('theme', v? 'dark':'light')
+    localStorage.setItem('theme', v ? 'dark' : 'light')
   }
 
   return (
-    <button onClick={toggle} className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded">{dark? 'Light':'Dark'}</button>
+    <button onClick={toggle} className="button-secondary w-full justify-between">
+      <span>{dark ? 'Switch to light' : 'Switch to dark'}</span>
+      {dark ? <SunMedium size={18} /> : <Moon size={18} />}
+    </button>
   )
 }

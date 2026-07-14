@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: { appDir: true }
+  outputFileTracingRoot: __dirname,
 }
 module.exports = nextConfig

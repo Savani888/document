@@ -8,11 +8,17 @@
     "start": "next start"
   },
   "dependencies": {
+    "framer-motion": "10.x",
+    "lucide-react": "^1.24.0",
     "next": "15.x",
     "react": "18.x",
     "react-dom": "18.x",
-    "tailwindcss": "3.x",
-    "framer-motion": "10.x",
-    "react-hook-form": "7.x"
+    "react-hook-form": "7.x",
+    "tailwindcss": "3.x"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "@types/react": "^19.2.17",
+    "typescript": "^5.8.2"
   }
 }
