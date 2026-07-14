@@ -17,7 +17,7 @@ const sections = [
   { href: '/export', label: 'Export', icon: Download },
 ]
 
-export default function Sidebar(){
+export default function Sidebar() {
   const pathname = usePathname()
 
   return (
@@ -28,7 +28,7 @@ export default function Sidebar(){
             Document AI
           </div>
           <div>
-            <div className="text-2xl font-semibold tracking-tight text-[#171717]">NotebookLM Lite</div>
+            <div className="text-2xl font-semibold tracking-tight text-[#171717]">Document Summary Assistant</div>
             <p className="mt-2 text-sm leading-6 text-[#5a5a5a]">A focused workspace for document analysis and knowledge retrieval.</p>
           </div>
         </div>

@@ -66,7 +66,7 @@ textarea {
 }
 
 .upload-area {
-  @apply group relative rounded-[18px] border border-dashed border-[#d4d4d4] bg-[#fafafa] px-6 py-10 text-center transition duration-200 ease-in-out hover:border-[#bfbfbf] hover:bg-white;
+  @apply relative rounded-[18px] border border-dashed border-[#d4d4d4] bg-[#fafafa] px-6 py-10 text-center transition duration-200 ease-in-out hover:border-[#bfbfbf] hover:bg-white;
 }
 
 .upload-area:hover .upload-icon {
