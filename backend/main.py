@@ -1,20 +1,19 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Body
+from fastapi.responses import JSONResponse
 from pathlib import Path
+from typing import Optional
 import shutil
+
 from backend.services.pdf_parser import extract_text_from_pdf
 from backend.ocr.ocr import ocr_image
 from backend.rag.vector_store import index_documents, search
 from backend.utils.chunk import chunk_text
-from backend.models.schemas import ChatRequest, ChatResponse, SummaryRequest, SummaryResponse
+from backend.models.schemas import SummaryRequest, SummaryResponse
 from backend.rag.qa import retrieve_context, answer_from_context
-from fastapi import Body
-from fastapi.responses import JSONResponse
-from backend.services.flashcards import generate_flashcards
-from backend.services.quiz import generate_quiz
-from backend.services.timeline import extract_timeline
+from backend.services.llm import summarize_document
 from backend.services.insights import extract_insights
-from typing import Optional
 
 app = FastAPI(title="Document Intelligence API")
 app.add_middleware(
@@ -28,65 +27,80 @@ app.add_middleware(
 UPLOAD_DIR = Path("./storage")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+
+@app.get('/health')
+async def health():
+    return JSONResponse(content={'status': 'ok'})
+
+
 @app.post('/upload')
 async def upload(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file uploaded")
+
+    allowed_types = ("application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp")
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Unsupported file type. Please upload a PDF or image.")
+
     dest = UPLOAD_DIR / file.filename
     with dest.open('wb') as f:
         shutil.copyfileobj(file.file, f)
 
-    # Basic file handling: PDF or image
-    if file.content_type in ("application/pdf",):
+    if file.content_type == "application/pdf":
         pages = extract_text_from_pdf(str(dest))
         text = "\n\n".join(pages)
-    elif file.content_type.startswith("image/"):
+    else:
         text = ocr_image(str(dest))
         pages = [text]
-    else:
-        raise HTTPException(status_code=400, detail="Unsupported file type")
 
-    # Chunk and index
+    if not text.strip():
+        raise HTTPException(status_code=422, detail="Could not extract any text from the file.")
+
     chunks = chunk_text(text)
     index_documents(file.filename, chunks)
 
-    return {"filename": file.filename, "pages": len(pages)}
-
-
-@app.post('/chat', response_model=ChatResponse)
-async def chat(body: ChatRequest):
-    query = body.query
-    top_k = body.top_k or 5
-    contexts = retrieve_context(query, k=top_k)
-    # contexts is list of (meta_dict, distance)
-    metas = [c[0] for c in contexts]
-    answer = answer_from_context(query, metas)
-    sources = []
-    for m, d in contexts:
-        if m and 'page' in m:
-            sources.append(m.get('page'))
-    return ChatResponse(answer=answer, sources=list(dict.fromkeys(sources)))
+    return {"filename": file.filename, "pages": len(pages), "word_count": len(text.split())}
 
 
 @app.post('/summary', response_model=SummaryResponse)
 async def summary(req: SummaryRequest = Body(...)):
     length = req.length
     top_k = req.top_k
-    prompt = "summarize the document"
+    prompt = "summarize the entire document comprehensively"
     contexts = retrieve_context(prompt, k=top_k)
     metas = [c[0] for c in contexts]
-    summary_text = answer_from_context(prompt, metas)
+    summary_text = summarize_document(length, metas)
     sources = [m.get('page') for m, _ in contexts if m and 'page' in m]
     return SummaryResponse(length=length, summary=summary_text, sources=list(dict.fromkeys(sources)))
 
 
-@app.get('/metadata')
-async def metadata(doc_id: Optional[str] = None):
+@app.get('/improvements')
+async def improvements(doc_id: Optional[str] = None):
+    """Return improvement suggestions based on the indexed document content."""
     from backend.rag.vector_store import _load_metadata
+    from backend.services.llm import _get_response, _build_context
+
     meta = _load_metadata()
     if doc_id:
         meta = [m for m in meta if m.get('doc_id') == doc_id]
-    return JSONResponse(content=meta)
+
+    if not meta:
+        return JSONResponse(content={"suggestions": [], "message": "No document indexed yet."})
+
+    context_text = _build_context(meta[:20])
+    prompt = (
+        "You are a professional writing and content coach. Analyze the document excerpt below and provide "
+        "5 to 8 specific, actionable improvement suggestions. Focus on: clarity, structure, completeness, "
+        "grammar, tone, and any missing information. Format each suggestion as a numbered point with a short "
+        "bold title followed by a concise explanation.\n\n"
+        f"Document excerpt:\n{context_text}\n\nImprovement Suggestions:"
+    )
+    result = _get_response(prompt, max_output_tokens=800)
+    if not result:
+        return JSONResponse(content={"suggestions": [], "message": "Could not generate suggestions. Check your Gemini API key."})
+
+    lines = [l.strip() for l in result.strip().split('\n') if l.strip()]
+    return JSONResponse(content={"suggestions": lines})
 
 
 @app.get('/documents')
@@ -104,68 +118,7 @@ async def documents():
         if page is not None:
             docs[doc_id]['pages'].add(page)
 
-    return JSONResponse(content=[{'doc_id': d['doc_id'], 'chunk_count': d['chunk_count'], 'pages': sorted(list(d['pages']))} for d in docs.values()])
-
-
-@app.get('/health')
-async def health():
-    return JSONResponse(content={'status': 'ok'})
-
-
-@app.get('/flashcards')
-async def flashcards(doc_id: Optional[str] = None, top_k: int = 20):
-    # Generate flashcards from top chunks
-    from backend.rag.vector_store import _load_metadata
-    meta = _load_metadata()
-    if doc_id:
-        meta = [m for m in meta if m.get('doc_id') == doc_id]
-    texts = [m.get('text','') for m in meta][:top_k]
-    cards = generate_flashcards(texts)
-    return JSONResponse(content=cards)
-
-
-@app.get('/quiz')
-async def quiz(doc_id: Optional[str] = None, count: int = 5):
-    from backend.rag.vector_store import _load_metadata
-    meta = _load_metadata()
-    if doc_id:
-        meta = [m for m in meta if m.get('doc_id') == doc_id]
-    texts = [m.get('text','') for m in meta]
-    quiz = generate_quiz(texts, count=count)
-    return JSONResponse(content=quiz)
-
-
-@app.get('/timeline')
-async def timeline(doc_id: Optional[str] = None):
-    from backend.rag.vector_store import _load_metadata
-    meta = _load_metadata()
-    if doc_id:
-        meta = [m for m in meta if m.get('doc_id') == doc_id]
-    texts = [m.get('text','') for m in meta]
-    events = extract_timeline(texts)
-    return JSONResponse(content=events)
-
-
-@app.get('/insights')
-async def insights(doc_id: Optional[str] = None):
-    from backend.rag.vector_store import _load_metadata
-    meta = _load_metadata()
-    if doc_id:
-        meta = [m for m in meta if m.get('doc_id') == doc_id]
-    texts = [m.get('text','') for m in meta]
-    data = extract_insights(texts)
-    return JSONResponse(content=data)
-
-
-@app.post('/export')
-async def export(format: str = Body('md')):
-    # Export last indexed document summary as markdown or txt
-    from backend.rag.vector_store import _load_metadata
-    meta = _load_metadata()
-    texts = [m.get('text','') for m in meta]
-    content = "\n\n".join(texts[:50])
-    if format == 'txt':
-        return JSONResponse(content={'format':'txt','content':content})
-    # default markdown
-    md = f"# Exported Document\n\n{content}"
-    return JSONResponse(content={'format':'md','content':md})
+    return JSONResponse(content=[
+        {'doc_id': d['doc_id'], 'chunk_count': d['chunk_count'], 'pages': sorted(list(d['pages']))}
+        for d in docs.values()
+    ])

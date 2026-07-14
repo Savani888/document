@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import { FileText, MessageCircle, AlignLeft, Sparkles, Brain, HelpCircle, ListChecks, ArrowUpRight, Download } from 'lucide-react'
-import DarkModeToggle from './DarkModeToggle'
 
 const sections = [
   { href: '/', label: 'Overview', icon: AlignLeft },
@@ -55,7 +54,6 @@ export default function Sidebar() {
         <div className="rounded-[16px] border border-[#e5e5e5] bg-[#fafafa] p-3 text-sm text-[#404040]">
           Built for clarity and precision.
         </div>
-        <DarkModeToggle />
       </div>
     </div>
   )

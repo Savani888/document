@@ -13,15 +13,13 @@ except Exception:  # pragma: no cover - optional dependency
 
 def extract_text_from_pdf(path: str) -> List[str]:
     """Extract text per page. Tries PyMuPDF, then pdfplumber, then a stub fallback."""
-    pages: List[str] = []
 
     if fitz is not None:
         try:
             doc = fitz.open(path)
-            for p in doc:
-                txt = p.get_text("text")
-                pages.append(txt.strip())
-            if pages:
+            pages: List[str] = [p.get_text("text").strip() for p in doc]
+            doc.close()
+            if any(pages):  # at least one page has real text
                 return pages
         except Exception:
             pass
@@ -29,11 +27,16 @@ def extract_text_from_pdf(path: str) -> List[str]:
     if pdfplumber is not None:
         try:
             with pdfplumber.open(path) as pdf:
-                for p in pdf.pages:
-                    pages.append((p.extract_text() or "").strip())
-            if pages:
+                pages = [(p.extract_text() or "").strip() for p in pdf.pages]
+            if any(pages):  # at least one page has real text
                 return pages
         except Exception:
             pass
 
-    return ["PDF text could not be extracted in this environment. Install PyMuPDF/pdfplumber for full extraction."]
+    # Both libraries are installed but the PDF has no extractable text
+    # (e.g. a scanned image-only PDF). Return an informative message so
+    # the user knows to use OCR instead of a plain upload.
+    return [
+        "This PDF appears to contain only scanned images with no embedded text. "
+        "Please use the OCR upload endpoint or convert the PDF to a text-based format."
+    ]

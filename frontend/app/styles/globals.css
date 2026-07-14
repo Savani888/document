@@ -3,129 +3,92 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-synthesis: none;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 html,
 body {
-  min-height: 100%;
-}
-
-body {
   margin: 0;
-  background: #f5f5f5;
-  color: #171717;
+  padding: 0;
+  background: #ffffff;
+  color: #111111;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-* {
-  box-sizing: border-box;
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f5f5f5; }
+::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 99px; }
+
+/* ── Step badge ── */
+.step-badge {
+  @apply inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#111111] text-sm font-semibold text-white;
 }
 
-::selection {
-  background: rgba(38, 38, 38, 0.12);
-  color: #171717;
+/* ── Cards ── */
+.card {
+  @apply rounded-2xl border border-[#e5e5e5] bg-white p-6 shadow-sm;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+/* ── Buttons ── */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[#111111] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50;
 }
 
-.glass-card {
-  @apply rounded-[20px] border border-[#e5e5e5] bg-white shadow-[0_10px_30px_-18px_rgba(23,23,23,0.14)];
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-[#d4d4d4] bg-white px-5 py-2.5 text-sm font-semibold text-[#111111] transition-all duration-150 hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-50;
 }
 
-.card-hover:hover {
-  @apply border-slate-300 shadow-[0_14px_40px_-24px_rgba(23,23,23,0.16)];
+/* ── Length pill ── */
+.length-pill {
+  @apply cursor-pointer rounded-lg border border-[#e5e5e5] px-4 py-1.5 text-sm font-medium text-[#555555] transition-all duration-150 hover:border-[#111111] hover:text-[#111111];
 }
 
-.card-surface,
-.panel-surface {
-  @apply rounded-[16px] border border-[#e5e5e5] bg-white shadow-sm;
+.length-pill-active {
+  @apply border-[#111111] bg-[#111111] text-white;
 }
 
-.button-primary {
-  @apply inline-flex items-center justify-center rounded-[12px] bg-[#171717] px-4 py-2 text-sm font-medium text-white transition duration-200 ease-in-out hover:opacity-90;
+/* ── Upload drop zone ── */
+.drop-zone {
+  @apply relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#d4d4d4] bg-[#fafafa] px-8 py-14 text-center transition-all duration-200 cursor-pointer;
 }
 
-.button-secondary {
-  @apply inline-flex items-center justify-center rounded-[12px] border border-[#d4d4d4] bg-white px-4 py-2 text-sm font-medium text-[#171717] transition duration-200 ease-in-out hover:bg-[#f5f5f5];
+.drop-zone:hover,
+.drop-zone.drag-over {
+  @apply border-[#111111] bg-[#f5f5f5];
 }
 
-.button-ghost {
-  @apply inline-flex items-center justify-center rounded-[12px] bg-transparent px-4 py-2 text-sm font-medium text-[#404040] transition duration-200 ease-in-out hover:bg-[#f5f5f5];
+/* ── Status message ── */
+.status-ok  { @apply rounded-xl border border-[#d1fae5] bg-[#f0fdf4] px-4 py-3 text-sm text-[#166534]; }
+.status-err { @apply rounded-xl border border-[#fee2e2] bg-[#fef2f2] px-4 py-3 text-sm text-[#991b1b]; }
+
+/* ── Summary output ── */
+.output-box {
+  @apply min-h-[140px] rounded-2xl border border-[#e5e5e5] bg-[#fafafa] p-5 text-sm leading-7 text-[#333333] whitespace-pre-wrap;
 }
 
-.input-base {
-  @apply w-full rounded-[12px] border border-[#d4d4d4] bg-white px-4 py-2.5 text-sm text-[#171717] outline-none transition duration-200 ease-in-out focus:border-[#404040] focus:ring-2 focus:ring-[#d4d4d4];
+/* ── Suggestion item ── */
+.suggestion-item {
+  @apply rounded-xl border border-[#e5e5e5] bg-white p-4 text-sm leading-6 text-[#333333];
 }
 
-.upload-area {
-  @apply relative rounded-[18px] border border-dashed border-[#d4d4d4] bg-[#fafafa] px-6 py-10 text-center transition duration-200 ease-in-out hover:border-[#bfbfbf] hover:bg-white;
+/* ── Skeleton shimmer ── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
 }
 
-.upload-area:hover .upload-icon {
-  @apply text-[#404040];
-}
-
-.upload-area:focus-within {
-  @apply border-[#404040] bg-white;
-}
-
-.sidebar-panel {
-  @apply flex h-full flex-col justify-between rounded-[20px] border border-[#e5e5e5] bg-white px-4 py-5;
-}
-
-.nav-link {
-  @apply flex items-center gap-3 rounded-[14px] px-3 py-3 text-sm font-medium text-[#404040] transition duration-200 ease-in-out hover:bg-[#f5f5f5];
-}
-
-.nav-link-active {
-  @apply bg-[#171717] text-white;
-}
-
-.dark body {
-  background: #111111;
-  color: #f5f5f5;
-}
-
-.dark .glass-card,
-.dark .card-surface,
-.dark .panel-surface,
-.dark .sidebar-panel {
-  @apply bg-[#1c1c1c] border-[#2e2e2e];
-}
-
-.dark .button-primary {
-  @apply bg-[#f5f5f5] text-[#171717];
-}
-
-.dark .button-secondary,
-.dark .button-ghost {
-  @apply bg-[#171717] border-[#2e2e2e] text-[#f5f5f5];
-}
-
-.dark .input-base {
-  @apply bg-[#171717] border-[#2e2e2e] text-[#f5f5f5] focus:border-[#f5f5f5] focus:ring-[#2e2e2e];
-}
-
-.dark .upload-area {
-  @apply bg-[#171717] border-[#2e2e2e];
-}
-
-.dark .upload-area:hover {
-  @apply bg-[#1c1c1c] border-[#4b4b4b];
-}
-
-.dark .nav-link {
-  @apply text-[#d4d4d4];
-}
-
-.dark .nav-link-active {
-  @apply bg-[#171717] text-white;
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 8px;
 }
