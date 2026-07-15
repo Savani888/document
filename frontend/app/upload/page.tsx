@@ -7,12 +7,12 @@ import Upload from '../components/Upload'
 export default function UploadPage() {
   return (
     <PageShell
-      title="Upload document"
-      description="Add a PDF or image to start the analysis workflow."
+      title="Upload Document"
+      description="Add a PDF or image file. Scanned images and photos will have text extracted via OCR."
       backHref="/"
       backLabel="Overview"
     >
-      <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/80">
+      <div className="card">
         <Upload />
       </div>
     </PageShell>

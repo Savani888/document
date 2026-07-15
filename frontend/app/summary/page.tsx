@@ -8,11 +8,11 @@ export default function SummaryPage() {
   return (
     <PageShell
       title="Summary"
-      description="Create short, medium, or long recaps for the active document."
+      description="Generate a short, medium, or long AI-powered recap of your uploaded document."
       backHref="/"
       backLabel="Overview"
     >
-      <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/80">
+      <div className="card">
         <SummaryPanel />
       </div>
     </PageShell>

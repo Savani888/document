@@ -1,6 +1,7 @@
 'use client'
-import React, {useState} from 'react'
-import { getInsights } from '../../lib/api'
+import React, { useState } from 'react'
+import { getImprovements } from '../../lib/api'
+
 
 export default function InsightsPanel(){
   const [insights, setInsights] = useState<any | null>(null)
@@ -9,8 +10,10 @@ export default function InsightsPanel(){
   async function load(){
     setLoading(true)
     try{
-      const json = await getInsights()
+      const json = await getImprovements()
+      // backend returns: { suggestions: [...] , message?: string }
       setInsights(json)
+
     }catch(e){
       setInsights(null)
     }finally{ setLoading(false) }
@@ -24,26 +27,29 @@ export default function InsightsPanel(){
       {loading && <div className="text-sm text-slate-500">Analyzing...</div>}
       {insights && (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3 text-sm dark:border-slate-800/70 dark:bg-slate-900/70">
-              <div className="text-slate-500 dark:text-slate-400">Words</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{insights.word_count}</div>
+          <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/70 dark:bg-slate-900/70">
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">Improvement Suggestions</div>
+              {Array.isArray((insights as any).suggestions) && (
+                <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {(insights as any).suggestions.length} items
+                </span>
+              )}
             </div>
-            <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3 text-sm dark:border-slate-800/70 dark:bg-slate-900/70">
-              <div className="text-slate-500 dark:text-slate-400">Read time</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{insights.reading_time_min} min</div>
-            </div>
-          </div>
-          <div>
-            <div className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Top words</div>
-            <div className="grid grid-cols-2 gap-2">
-              {insights.top_words.map((w:any,i:number)=> (
-                <div key={i} className="rounded-2xl border border-slate-200/70 bg-white/80 p-2 text-sm text-slate-600 shadow-sm dark:border-slate-800/70 dark:bg-slate-800/80 dark:text-slate-300">{w.word} ({w.count})</div>
+
+            {(insights as any).message && (
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{(insights as any).message}</p>
+            )}
+
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-700 dark:text-slate-200">
+              {Array.isArray((insights as any).suggestions) && (insights as any).suggestions.map((s: string, i: number) => (
+                <li key={i}>{s}</li>
               ))}
-            </div>
+            </ol>
           </div>
         </div>
       )}
+
     </div>
   )
 }

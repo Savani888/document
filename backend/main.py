@@ -40,7 +40,10 @@ async def upload(file: UploadFile = File(...)):
 
     allowed_types = ("application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp")
     if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Unsupported file type. Please upload a PDF or image.")
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type. Please upload a PDF or image (PNG, JPG, WEBP)."
+        )
 
     dest = UPLOAD_DIR / file.filename
     with dest.open('wb') as f:
@@ -59,7 +62,12 @@ async def upload(file: UploadFile = File(...)):
     chunks = chunk_text(text)
     index_documents(file.filename, chunks)
 
-    return {"filename": file.filename, "pages": len(pages), "word_count": len(text.split())}
+    word_count = len(text.split())
+    return {
+        "filename": file.filename,
+        "pages": len(pages),
+        "word_count": word_count,
+    }
 
 
 @app.post('/summary', response_model=SummaryResponse)
@@ -74,6 +82,25 @@ async def summary(req: SummaryRequest = Body(...)):
     return SummaryResponse(length=length, summary=summary_text, sources=list(dict.fromkeys(sources)))
 
 
+@app.get('/insights')
+async def insights_endpoint():
+    """Return word count, reading time, and top words from the indexed document content."""
+    from backend.rag.vector_store import _load_metadata
+
+    meta = _load_metadata()
+    if not meta:
+        return JSONResponse(content={
+            "word_count": 0,
+            "reading_time_min": 0,
+            "top_words": [],
+            "message": "No document indexed yet. Upload a document first."
+        })
+
+    texts = [m.get('text', '') for m in meta if m.get('text')]
+    result = extract_insights(texts)
+    return JSONResponse(content=result)
+
+
 @app.get('/improvements')
 async def improvements(doc_id: Optional[str] = None):
     """Return improvement suggestions based on the indexed document content."""
@@ -85,7 +112,7 @@ async def improvements(doc_id: Optional[str] = None):
         meta = [m for m in meta if m.get('doc_id') == doc_id]
 
     if not meta:
-        return JSONResponse(content={"suggestions": [], "message": "No document indexed yet."})
+        return JSONResponse(content={"suggestions": [], "message": "No document indexed yet. Upload a document first."})
 
     context_text = _build_context(meta[:20])
     prompt = (
@@ -101,6 +128,16 @@ async def improvements(doc_id: Optional[str] = None):
 
     lines = [l.strip() for l in result.strip().split('\n') if l.strip()]
     return JSONResponse(content={"suggestions": lines})
+
+
+@app.post('/chat')
+async def chat(query: str = Body(..., embed=True), top_k: int = Body(5, embed=True)):
+    """Answer a question about the uploaded document."""
+    contexts = retrieve_context(query, k=top_k)
+    metas = [c[0] for c in contexts]
+    answer = answer_from_context(query, metas)
+    sources = [m.get('page') for m, _ in contexts if m and 'page' in m]
+    return {"answer": answer, "sources": list(dict.fromkeys(sources))}
 
 
 @app.get('/documents')
